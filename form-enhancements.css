@@ -1,0 +1,45 @@
+dialog input:not([type="checkbox"]) {
+  width: 100%;
+  min-height: 50px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 0 .8rem;
+  margin-bottom: 15px;
+}
+
+.consent {
+  display: flex;
+  gap: .65rem;
+  align-items: flex-start;
+  margin: 6px 0 20px;
+  font-size: .9rem;
+  line-height: 1.4;
+}
+
+.consent input {
+  flex: 0 0 auto;
+  width: 20px;
+  min-height: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  padding: 0;
+  border: 0;
+  accent-color: var(--magenta);
+}
+
+.participant {
+  display: block;
+  min-width: 0;
+}
+
+.participant strong,
+.participant small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.participant small {
+  color: var(--ink-soft);
+  font-size: .8rem;
+  font-weight: 700;
+}
