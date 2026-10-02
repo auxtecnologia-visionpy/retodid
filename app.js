@@ -1,5 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzdCCdMK1b63sydBYiVYbBY7VANfPyPYJGXg4dNDmQ5y6oZKn2U0e1GS0KCbB4MlQiE/exec";
-const API_TIMEOUT_MS = 15_000;
+// Apps Script a veces tarda más de 20 s en responder (sobre todo con datos móviles): se espera hasta 40 s y se reintenta una vez.
+const API_TIMEOUT_MS = 40000;
+const SLOW_NOTICE_MS = 4000;
 const CHEAT_MESSAGE = "JAJAJA MALDITO TRAMPOSO NO PUEDES RESPONDER UNAS SIMPLES PREGUNTAS? ANDA VE, HAZ TRAMPA. PERO DATE POR ENTERADO QUE TODOS SABEMOS QUE HACES TRAMPA!";
 
 let quiz = {};
@@ -17,6 +19,32 @@ let toastTimer;
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
+// Equivalente a replaceChildren, que no existe en celulares con navegadores viejos.
+function setChildren(parent, children) {
+  while (parent.firstChild) parent.removeChild(parent.firstChild);
+  children.forEach((child) => parent.appendChild(child));
+}
+
+// <dialog> no existe en iPhone con iOS anterior a 15.4: en ese caso se muestra como capa fija.
+function openDialog() {
+  const dialog = $("#participant-dialog");
+  if (dialog.open) return;
+  if (typeof dialog.showModal === "function") dialog.showModal();
+  else {
+    dialog.setAttribute("open", "");
+    document.body.classList.add("dialog-fallback");
+  }
+}
+
+function closeDialog() {
+  const dialog = $("#participant-dialog");
+  if (typeof dialog.close === "function") dialog.close();
+  else {
+    dialog.removeAttribute("open");
+    document.body.classList.remove("dialog-fallback");
+  }
+}
+
 function escapeHtml(text) {
   const element = document.createElement("div");
   element.textContent = text == null ? "" : String(text);
@@ -33,7 +61,7 @@ function shuffle(items) {
 }
 
 function randomId() {
-  if (window.crypto?.randomUUID) return crypto.randomUUID();
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 }
 
@@ -45,8 +73,8 @@ function getClientId() {
       localStorage.setItem("didClientId", id);
     }
     return id;
-  } catch {
-    memoryClientId ||= randomId();
+  } catch (error) {
+    if (!memoryClientId) memoryClientId = randomId();
     return memoryClientId;
   }
 }
@@ -58,14 +86,14 @@ function friendlyError(error) {
 }
 
 async function fetchJson(url, options = {}) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), API_TIMEOUT_MS) : null;
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal });
+    const response = await fetch(url, controller ? { ...options, signal: controller.signal } : options);
     let payload;
     try {
       payload = JSON.parse(await response.text());
-    } catch {
+    } catch (error) {
       throw new Error("El servidor no respondió correctamente. Intentá nuevamente en unos minutos.");
     }
     if (!response.ok || payload.error) throw new Error(payload.error || "No fue posible completar la conexión.");
@@ -95,7 +123,7 @@ function renderBoard() {
 function setBranchOptions(branches) {
   const select = $("#participant-branch");
   const previous = select.value;
-  select.replaceChildren(new Option("Seleccioná tu Entidad/Sucursal", "", true, true));
+  setChildren(select, [new Option("Seleccioná tu Entidad/Sucursal", "", true, true)]);
   select.options[0].disabled = true;
   [...new Set(branches.filter(Boolean))].forEach((branch) => select.add(new Option(branch, branch)));
   if (previous && branches.includes(previous)) select.value = previous;
@@ -116,12 +144,30 @@ function setLoadState(state, message = "") {
   $("#load-status").classList.toggle("is-error", state === "error");
 }
 
+function isNetworkError(error) {
+  return error.name === "AbortError" || error instanceof TypeError;
+}
+
+async function fetchBootstrap() {
+  const url = `${API_URL}?action=bootstrap`;
+  try {
+    return await fetchJson(url, { cache: "no-store" });
+  } catch (error) {
+    if (!isNetworkError(error)) throw error;
+    $("#load-status").textContent = "La conexión está lenta. Reintentando…";
+    return fetchJson(url, { cache: "no-store" });
+  }
+}
+
 async function loadData() {
   setLoadState("loading", "");
   $("#question-count").textContent = "Cargando preguntas…";
   $("#connection-state").textContent = "Cargando…";
+  const slowTimer = setTimeout(() => {
+    $("#load-status").textContent = "Conectando con el servidor. Puede tardar unos segundos…";
+  }, SLOW_NOTICE_MS);
   try {
-    const data = await fetchJson(`${API_URL}?action=bootstrap`, { cache: "no-store" });
+    const data = await fetchBootstrap();
     quiz = data.quiz || {};
     setText("#quiz-title", quiz.title);
     setText("#quiz-description", quiz.description);
@@ -143,6 +189,8 @@ async function loadData() {
     $("#connection-state").textContent = "Sin conexión";
     $("#leaderboard-list").innerHTML = '<li class="leaderboard-empty">No pudimos cargar el tablero.</li>';
     setLoadState("error", `No pudimos cargar el reto. ${friendlyError(error)}`);
+  } finally {
+    clearTimeout(slowTimer);
   }
 }
 
@@ -178,7 +226,7 @@ function renderQuestion() {
   $("#progress-fill").style.width = `${((current + 1) / deck.length) * 100}%`;
   $("#question-text").textContent = question.question;
   $("#feedback").hidden = true;
-  $("#answers").replaceChildren(...question.order.map((optionIndex) => {
+  setChildren($("#answers"), question.order.map((optionIndex) => {
     const button = document.createElement("button");
     button.className = "answer";
     button.type = "button";
@@ -216,7 +264,7 @@ function answer(selected) {
     if (current < deck.length) renderQuestion();
     else completeQuiz();
   }, { once: true });
-  $("#feedback").replaceChildren(title, explanation, next);
+  setChildren($("#feedback"), [title, explanation, next]);
   $("#feedback").hidden = false;
   next.focus({ preventScroll: true });
   next.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -228,8 +276,9 @@ function completeQuiz() {
   $("#quiz").hidden = true;
   $("#result-summary").textContent = `Respondiste bien ${correct} de ${deck.length} preguntas y sumaste ${points} puntos.`;
   $$('input[name="visibility"]').forEach((input) => { input.checked = false; });
+  $$(".choice").forEach((label) => label.classList.remove("is-checked"));
   showFormError("");
-  $("#participant-dialog").showModal();
+  openDialog();
 }
 
 function showFormError(message) {
@@ -239,7 +288,7 @@ function showFormError(message) {
 
 function finishAttempt() {
   unlockPage();
-  $("#participant-dialog").close();
+  closeDialog();
   deck = [];
   responses = [];
   attemptId = null;
@@ -299,8 +348,13 @@ window.addEventListener("popstate", () => {
 $("#participant-dialog").addEventListener("cancel", (event) => event.preventDefault());
 // Algunos navegadores cierran el diálogo igual con un segundo Escape: si el reto sigue pendiente, se vuelve a abrir.
 $("#participant-dialog").addEventListener("close", () => {
-  if (quizActive) $("#participant-dialog").showModal();
+  if (quizActive) openDialog();
 });
+
+// Marca visual de la opción elegida (reemplaza :has(), que no existe en navegadores viejos).
+$$('input[name="visibility"]').forEach((input) => input.addEventListener("change", () => {
+  $$(".choice").forEach((label) => label.classList.toggle("is-checked", label.querySelector("input").checked));
+}));
 
 $("#participant-form").addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -308,7 +362,8 @@ $("#participant-form").addEventListener("submit", async (event) => {
   const branch = $("#participant-branch").value;
   if (name.length < 3) return showFormError("Ingresá tu nombre y apellido.");
   if (!branch) return showFormError("Seleccioná tu Entidad/Sucursal.");
-  const visibility = $('input[name="visibility"]:checked')?.value;
+  const checked = $('input[name="visibility"]:checked');
+  const visibility = checked ? checked.value : "";
   if (!visibility) return showFormError("Elegí si querés aparecer en el tablero.");
   await submitScore({ name, branch, publish: visibility === "public" });
 });
