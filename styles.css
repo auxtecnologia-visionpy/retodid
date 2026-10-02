@@ -99,13 +99,17 @@ dialog form{padding:30px;display:flex;flex-direction:column}
 dialog h2{font-size:2rem;line-height:1.1;margin:.25rem 0}
 dialog p{color:var(--ink-soft)}
 .result-summary{font-weight:800;color:var(--ink);background:var(--blue-pale);border-radius:12px;padding:12px 14px}
-dialog label{display:block;font-weight:900;margin:1rem 0 .3rem}
-dialog input:not([type="checkbox"]),dialog select{width:100%;min-height:50px;border:2px solid var(--line);border-radius:12px;padding:0 .8rem;margin-bottom:6px;background:#fff;color:var(--ink)}
+dialog label:not(.choice){display:block;font-weight:900;margin:1rem 0 .3rem}
+dialog input:not([type="checkbox"]):not([type="radio"]),dialog select{width:100%;min-height:50px;border:2px solid var(--line);border-radius:12px;padding:0 .8rem;margin-bottom:6px;background:#fff;color:var(--ink)}
 dialog input:focus,dialog select:focus{outline:3px solid rgba(135,181,217,.6);border-color:var(--link)}
-.consent{display:flex;gap:.65rem;align-items:flex-start;margin:14px 0 18px;font-size:.9rem;line-height:1.4;font-weight:700}
-.consent input{flex:0 0 auto;width:20px;height:20px;margin:1px 0 0;accent-color:var(--magenta)}
+.visibility{border:0;padding:0;margin:14px 0 16px;min-width:0}
+.visibility legend{font-weight:900;padding:0;margin-bottom:.5rem}
+.choice{display:flex;gap:.7rem;align-items:flex-start;margin:0 0 10px;padding:12px 14px;border:2px solid var(--line);border-radius:12px;cursor:pointer;font-weight:400}
+.choice:has(input:checked){border-color:var(--link);background:var(--blue-pale)}
+.choice input{flex:0 0 auto;width:20px;height:20px;margin:2px 0 0;accent-color:var(--link)}
+.choice strong{display:block}
+.choice small{display:block;color:var(--ink-soft);font-size:.85rem;line-height:1.35}
 .form-error{margin:0 0 14px;color:var(--magenta);font-weight:800}
-.skip-save{margin-top:14px;padding:10px;font-size:.92rem}
 
 .toast{position:fixed;z-index:4;left:50%;bottom:20px;transform:translateX(-50%);max-width:calc(100vw - 32px);background:var(--ink);color:white;padding:13px 18px;border-radius:12px;font-weight:800;box-shadow:var(--shadow)}
 

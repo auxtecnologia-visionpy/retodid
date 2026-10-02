@@ -227,8 +227,7 @@ function completeQuiz() {
   const points = responses.reduce((sum, response, index) => sum + (response.selected === deck[index].answer ? Number(deck[index].points) || 0 : 0), 0);
   $("#quiz").hidden = true;
   $("#result-summary").textContent = `Respondiste bien ${correct} de ${deck.length} preguntas y sumaste ${points} puntos.`;
-  $("#public-consent").checked = false;
-  resetSkip();
+  $$('input[name="visibility"]').forEach((input) => { input.checked = false; });
   showFormError("");
   $("#participant-dialog").showModal();
 }
@@ -236,12 +235,6 @@ function completeQuiz() {
 function showFormError(message) {
   $("#form-error").textContent = message;
   $("#form-error").hidden = !message;
-}
-
-function resetSkip() {
-  const skip = $("#skip-save");
-  delete skip.dataset.confirm;
-  skip.textContent = "No publicar mi resultado";
 }
 
 function finishAttempt() {
@@ -257,27 +250,27 @@ async function submitScore(profile) {
   isSubmitting = true;
   const saveButton = $("#save-score");
   saveButton.disabled = true;
-  $("#skip-save").disabled = true;
   saveButton.textContent = "Guardando…";
   showFormError("");
   try {
     const result = await fetchJson(API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "submit", attemptId, name: profile.name, branch: profile.branch, consent: true, responses, clientId: getClientId() })
+      body: JSON.stringify({ action: "submit", attemptId, name: profile.name, branch: profile.branch, consent: profile.publish, responses, clientId: getClientId() })
     });
     if (Array.isArray(result.leaderboard)) leaders = result.leaderboard;
     renderBoard();
     finishAttempt();
     $("#tablero").scrollIntoView({ behavior: "smooth" });
-    toast(`¡Reto completado! Sumaste ${result.points} puntos.`);
+    toast(result.published
+      ? `¡Reto completado! Sumaste ${result.points} puntos.`
+      : `¡Reto completado! Sumaste ${result.points} puntos. Tu resultado quedó registrado sin publicarse.`);
   } catch (error) {
     showFormError(friendlyError(error));
   } finally {
     isSubmitting = false;
     saveButton.disabled = false;
-    $("#skip-save").disabled = false;
-    saveButton.innerHTML = 'Guardar mi puntaje <span aria-hidden="true">→</span>';
+      saveButton.innerHTML = 'Guardar mi resultado <span aria-hidden="true">→</span>';
   }
 }
 
@@ -309,26 +302,15 @@ $("#participant-dialog").addEventListener("close", () => {
   if (quizActive) $("#participant-dialog").showModal();
 });
 
-$("#skip-save").addEventListener("click", () => {
-  const skip = $("#skip-save");
-  if (skip.dataset.confirm) {
-    finishAttempt();
-    toast("Tu resultado no se publicó. ¡Gracias por participar!");
-    return;
-  }
-  skip.dataset.confirm = "1";
-  skip.textContent = "¿Seguro? Tocá de nuevo para salir sin guardar";
-});
-
 $("#participant-form").addEventListener("submit", async (event) => {
   event.preventDefault();
-  resetSkip();
   const name = $("#participant-name").value.trim().replace(/\s+/g, " ");
   const branch = $("#participant-branch").value;
   if (name.length < 3) return showFormError("Ingresá tu nombre y apellido.");
   if (!branch) return showFormError("Seleccioná tu Entidad/Sucursal.");
-  if (!$("#public-consent").checked) return showFormError("Para aparecer en el tablero necesitamos tu autorización.");
-  await submitScore({ name, branch });
+  const visibility = $('input[name="visibility"]:checked')?.value;
+  if (!visibility) return showFormError("Elegí si querés aparecer en el tablero.");
+  await submitScore({ name, branch, publish: visibility === "public" });
 });
 
 console.log(`%c${CHEAT_MESSAGE}`, "font-size:26px;font-weight:900;color:#a0427c;line-height:1.3");

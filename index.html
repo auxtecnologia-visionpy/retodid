@@ -78,15 +78,17 @@
         <p class="eyebrow">Reto completado</p>
         <h2 id="participant-title">Guardá tu resultado</h2>
         <p class="result-summary" id="result-summary"></p>
-        <p>Tu nombre y Entidad/Sucursal se mostrarán públicamente junto a tus puntos.</p>
         <label for="participant-name">Nombre y apellido</label>
         <input id="participant-name" name="participant-name" maxlength="80" minlength="3" autocomplete="name" required placeholder="Ej.: María González" />
         <label for="participant-branch">Entidad / Sucursal de Fundación Visión</label>
         <select id="participant-branch" name="participant-branch" required></select>
-        <label class="consent"><input id="public-consent" name="public-consent" type="checkbox" required /> <span>Autorizo la publicación de mi nombre y Entidad/Sucursal en el tablero histórico.</span></label>
+        <fieldset class="visibility">
+          <legend>¿Querés aparecer en el tablero de la página?</legend>
+          <label class="choice"><input type="radio" name="visibility" value="public" required /> <span><strong>Sí, mostrar mi resultado</strong><small>Tu nombre, Entidad/Sucursal y puntos se verán en el tablero público.</small></span></label>
+          <label class="choice"><input type="radio" name="visibility" value="private" /> <span><strong>No, solo registrarlo</strong><small>Tu resultado queda guardado para Fundación Visión, pero no se mostrará en la página.</small></span></label>
+        </fieldset>
         <p class="form-error" id="form-error" role="alert" hidden></p>
-        <button class="button button-primary" id="save-score" type="submit">Guardar mi puntaje <span aria-hidden="true">→</span></button>
-        <button class="text-button skip-save" id="skip-save" type="button">No publicar mi resultado</button>
+        <button class="button button-primary" id="save-score" type="submit">Guardar mi resultado <span aria-hidden="true">→</span></button>
       </form>
     </dialog>
     <div class="toast" id="toast" role="status" hidden></div>

@@ -164,7 +164,7 @@ function submit_(data) {
   const clientId = String(data.clientId || '').trim().slice(0, 80);
   if (name.length < 3) throw new Error('Ingresá tu nombre y apellido.');
   if (!branchInput) throw new Error('Seleccioná tu Entidad/Sucursal de Fundación Visión.');
-  if (data.consent !== true) throw new Error('Necesitamos tu autorización para mostrar tus datos en el tablero público.');
+  if (typeof data.consent !== 'boolean') throw new Error('Elegí si querés mostrar tu resultado en el tablero.');
   if (!/^[A-Za-z0-9-]{8,64}$/.test(attemptId)) throw new Error('No fue posible identificar esta partida. Actualizá la página y volvé a jugar.');
 
   const lock = LockService.getScriptLock();
@@ -177,7 +177,7 @@ function submit_(data) {
 
     // Reintento o doble envío de la misma partida: devolvemos lo ya guardado sin crear otra fila.
     const saved = findAttempt_(sheet, headers, attemptId);
-    if (saved) return { name: saved.nombre, branch: saved.entidad_sucursal, points: Number(saved.puntos) || 0, leaderboard: leaderboard_(ss) };
+    if (saved) return { name: saved.nombre, branch: saved.entidad_sucursal, points: Number(saved.puntos) || 0, published: String(saved.consentimiento_publico).trim().toUpperCase() === 'SI', leaderboard: leaderboard_(ss) };
 
     const branch = branchResolver_(ss)(branchInput);
     if (!branch) throw new Error('Seleccioná una Entidad/Sucursal de la lista.');
@@ -191,12 +191,12 @@ function submit_(data) {
       intento_id: attemptId,
       cliente_id: safeCell_(clientId),
       respuestas: data.responses.length,
-      consentimiento_publico: 'SI'
+      consentimiento_publico: data.consent ? 'SI' : 'NO'
     };
     sheet.appendRow(headers.map(header => (header in values ? values[header] : '')));
     SpreadsheetApp.flush();
     CacheService.getScriptCache().remove(CACHE_KEY);
-    return { name, branch, points, leaderboard: leaderboard_(ss) };
+    return { name, branch, points, published: data.consent, leaderboard: leaderboard_(ss) };
   } finally {
     lock.releaseLock();
   }

@@ -71,7 +71,7 @@ No modifiques los encabezados. Una pregunta con datos inválidos (sin respuesta 
 - `variantes`: otras formas de escribir la misma sucursal, separadas por `|`. Sirven para unificar registros viejos en el tablero.
 - Para quitar una sucursal sin borrarla, poné `INACTIVA` en `estado`.
 
-**Puntajes**: se guardan todos los intentos. El tablero muestra el mejor puntaje de cada persona (nombre + sucursal). En empate gana quien lo logró primero. Solo se publica a quien tiene `SI` en `consentimiento_publico`. Para quitar a alguien del tablero, borrá sus filas o cambiá ese valor a `NO`.
+**Puntajes**: se guardan todos los intentos. Al terminar, cada persona elige si quiere aparecer en el tablero (`consentimiento_publico` = `SI`) o solo registrar su resultado (`NO`). Las filas con `NO` quedan para DID, pero nunca se muestran en la página. El tablero muestra el mejor puntaje de cada persona (nombre + sucursal) entre las filas con `SI`. En empate gana quien lo logró primero. Para quitar a alguien del tablero, borrá sus filas o cambiá ese valor a `NO`.
 
 Los cambios en la planilla se ven al instante: un activador `onEdit` limpia el caché.
 
