@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Reto DID: un reto breve para aprender lenguaje inclusivo. Fundación Visión." />
+    <title>Reto DID | Fundación Visión</title>
+    <link rel="icon" type="image/png" href="assets/logo-fundacion-vision.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Saltar al contenido</a>
+    <header class="site-header">
+      <a class="brand" href="#inicio" aria-label="Reto DID de Fundación Visión, ir al inicio">
+        <img class="brand-logo" src="assets/logo-fundacion-vision.png" alt="" width="131" height="48" />
+        <span class="brand-name">Reto <em>DID</em></span>
+      </a>
+      <nav aria-label="Navegación principal">
+        <a href="#reto">El reto</a><a href="#tablero">Tablero</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="inicio">
+        <div class="hero-copy">
+          <h1>Aprendé a incluir, pregunta a pregunta.</h1>
+          <p>Respondé el reto y descubrí cómo usar un lenguaje más respetuoso.</p>
+          <a class="button button-primary" href="#reto">Empezar el reto <span aria-hidden="true">→</span></a>
+        </div>
+        <img class="hero-art" src="assets/hero-inclusion.jpg" alt="Tres personas conversan y aprenden juntas: una usuaria de silla de ruedas, una persona con bastón blanco y una colega." />
+      </section>
+
+      <section class="mission-band" id="reto" aria-labelledby="mission-title">
+        <div class="section-heading"><p class="eyebrow">Lenguaje inclusivo</p><h2 id="mission-title">¿Te animás al reto?</h2></div>
+        <article class="mission-card">
+          <div class="mission-icon" aria-hidden="true">✦</div>
+          <div>
+            <p class="mission-number" id="question-count">Cargando preguntas…</p>
+            <h3 id="quiz-title" hidden></h3>
+            <p id="quiz-description" hidden></p>
+            <p>Una vez que empieces, completá todas las preguntas para salir.</p>
+          </div>
+          <button class="icon-button start-quiz" aria-label="Comenzar el reto" disabled>→</button>
+        </article>
+        <p class="load-status" id="load-status" role="status"></p>
+        <div class="mission-actions">
+          <button class="button button-primary start-quiz" disabled>Comenzar el reto <span aria-hidden="true">→</span></button>
+          <button class="button button-secondary" id="retry-load" hidden>Reintentar</button>
+        </div>
+      </section>
+
+      <section class="quiz-shell" id="quiz" aria-labelledby="question-text" hidden>
+        <div class="quiz-top"><p class="eyebrow">Reto DID</p><span id="quiz-progress"></span></div>
+        <div class="progress-track" aria-hidden="true"><i id="progress-fill"></i></div>
+        <h2 id="question-text" tabindex="-1"></h2>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="feedback" aria-live="polite" hidden></div>
+      </section>
+
+      <section class="leaderboard" id="tablero" aria-labelledby="leaderboard-title">
+        <div class="leaderboard-heading"><div><p class="eyebrow">Reconocemos el aprendizaje</p><h2 id="leaderboard-title">Tablero histórico</h2></div><span class="connection-state" id="connection-state">Cargando…</span></div>
+        <ol id="leaderboard-list" class="leaderboard-list"></ol>
+        <p class="leaderboard-note">Se muestra el mejor puntaje de cada participante. El tablero publica nombre y Entidad/Sucursal de Fundación Visión únicamente con autorización de cada participante.</p>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-brand"><img src="assets/logo-fundacion-vision.png" alt="Fundación Visión" width="109" height="40" loading="lazy" /><p><strong>Reto DID</strong></p></div>
+      <div class="footer-links"><a href="https://www.vision.org.py/desarrollo-inclusivo-y-discapacidades-did/" target="_blank" rel="noopener">Conocé el programa DID</a><a href="https://www.vision.org.py/tag/did-desarrollo-inclusivo-y-discapacidades/" target="_blank" rel="noopener">Novedades DID</a></div>
+    </footer>
+
+    <dialog id="participant-dialog" aria-labelledby="participant-title" aria-describedby="result-summary">
+      <form id="participant-form" novalidate>
+        <p class="eyebrow">Reto completado</p>
+        <h2 id="participant-title">Guardá tu resultado</h2>
+        <p class="result-summary" id="result-summary"></p>
+        <p>Tu nombre y Entidad/Sucursal se mostrarán públicamente junto a tus puntos.</p>
+        <label for="participant-name">Nombre y apellido</label>
+        <input id="participant-name" name="participant-name" maxlength="80" minlength="3" autocomplete="name" required placeholder="Ej.: María González" />
+        <label for="participant-branch">Entidad / Sucursal de Fundación Visión</label>
+        <select id="participant-branch" name="participant-branch" required></select>
+        <label class="consent"><input id="public-consent" name="public-consent" type="checkbox" required /> <span>Autorizo la publicación de mi nombre y Entidad/Sucursal en el tablero histórico.</span></label>
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+        <button class="button button-primary" id="save-score" type="submit">Guardar mi puntaje <span aria-hidden="true">→</span></button>
+        <button class="text-button skip-save" id="skip-save" type="button">No publicar mi resultado</button>
+      </form>
+    </dialog>
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script src="app.js"></script>
+  </body>
+</html>
